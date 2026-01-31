@@ -13,36 +13,35 @@ export interface Progress {
 
 /** 교시별 숙제 한 행 */
 export interface HomeworkEntry {
+  /** 학생 이름 */
   name: string;
 
-  /** 단어 점수 (예: 20/50) */
-  wordScore: string | null;
+  /** 단어 점수 */
+  wordScore: number | null;
 
   /** 숙제 점수 */
   homeworkScore: number | null;
 
-  /** 100% 미만 사유 (교시 기준) */
-  reason?: string;
+  /** 100% 미만 사유 */
+  reason: string;
 
-  /** 교시 이슈 */
-  issue?: string;
+  /** 이번 주 이슈 */
+  issue: string;
 
   /** 못한 숙제 체크리스트 */
-  missedTodos?: {
+  missedTodos: {
     text: string;
     done: boolean;
   }[];
 
+  /** UI 전용: 못한 숙제 입력 임시값 */
   _newTodo?: string;
 }
 
 /** 교시별 수업 기록 (특이사항, 진도, 숙제) */
 export interface PeriodRecord {
-  note?: string;
-  progress?: Partial<Progress>;
   homework?: HomeworkEntry[];
 }
-
 /** 요일 그룹별 교시 기록 */
 export interface DayGroupSchedule {
   period1?: PeriodRecord;
@@ -61,17 +60,19 @@ export interface StudentSummaryEntry {
   reasonBelow100: string; // 활성화(active=true) 된 사유만 모은 배열
   weeklyIssue: string;
 }
-
-/** 주차 단위 데이터 */
 export interface WeekRecord {
-  schedule: Schedule;
-  studentSummary: Record<
-    string,
-    {
-      reasonBelow100: string;
-      weeklyIssue: string;
-    }
-  >;
+  schedule: {
+    monWedFri?: {
+      period1?: PeriodRecord;
+      period2?: PeriodRecord;
+      period3?: PeriodRecord;
+    };
+    tueThuSat?: {
+      period1?: PeriodRecord;
+      period2?: PeriodRecord;
+      period3?: PeriodRecord;
+    };
+  };
 }
 
 /** LocalStorage 전체 데이터 */

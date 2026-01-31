@@ -41,18 +41,6 @@ function AppContent() {
     saveWeekRecord(weekKey, nextRecord);
   };
 
-  // ✅ 학생 주간 요약은 App이 관리
-  const updateStudentSummary = (
-    summary: Record<string, { reasonBelow100: string; weeklyIssue: string }>
-  ) => {
-    const nextRecord: WeekRecord = {
-      ...record,
-      studentSummary: summary
-    };
-    setRecord(nextRecord);
-    saveWeekRecord(weekKey, nextRecord);
-  };
-
   return (
     <div className="min-h-screen px-4 py-6 md:px-6">
       <div className="mx-auto max-w-6xl space-y-6">
@@ -82,8 +70,8 @@ function AppContent() {
         <WeeklyStudentSummary
           weekKey={weekKey}
           record={record}
-          summary={record.studentSummary ?? {}}
-          onSummaryChange={updateStudentSummary}
+          selectedDayGroup={dayGroup}
+          selectedPeriod={period}
           onWeekChange={setWeekKey}
           onRecordLoad={loadRecord}
         />

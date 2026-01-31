@@ -2,10 +2,9 @@ import { ChevronDown, Users } from "lucide-react";
 import type { ChangeEvent } from "react";
 import type { WeekRecord } from "../types";
 import {
-  getStudentWeeklyAverage,
-  getStudentWeeklyNotes
+  getStudentPeriodAverage,
+  getStudentPeriodNotes
 } from "../utils/average";
-import { getUniqueStudentNamesFromWeek } from "../utils/students";
 import { getStoredWeekKeys, getWeekLabel } from "../utils/weekKey";
 import { ExportButtons } from "./ExportButtons";
 
@@ -13,39 +12,18 @@ interface WeeklyStudentSummaryProps {
   weekKey: string;
   record: WeekRecord;
 
-  // ✅ App.tsx에서 내려주는 props
-  summary: Record<
-    string,
-    {
-      reasonBelow100: string;
-      weeklyIssue: string;
-    }
-  >;
-
-  onSummaryChange: (
-    summary: Record<
-      string,
-      {
-        reasonBelow100: string;
-        weeklyIssue: string;
-      }
-    >
-  ) => void;
+  selectedDayGroup: "monWedFri" | "tueThuSat";
+  selectedPeriod: "period1" | "period2" | "period3";
 
   onWeekChange: (weekKey: string) => void;
   onRecordLoad: (weekKey: string) => void;
-}
-interface WeeklyStudentSummaryRow {
-  name: string;
-  avg: number;
-  reasonBelow100: string;
-  weeklyIssue: string;
-  missedHomework: string[];
 }
 
 export function WeeklyStudentSummary({
   weekKey,
   record,
+  selectedDayGroup,
+  selectedPeriod,
   onWeekChange,
   onRecordLoad
 }: WeeklyStudentSummaryProps) {
@@ -53,31 +31,9 @@ export function WeeklyStudentSummary({
   const uniqueKeys = Array.from(new Set([weekKey, ...storedKeys]));
   const options = uniqueKeys.sort((a, b) => a.localeCompare(b));
 
-  const students = getUniqueStudentNamesFromWeek(record);
+  const periodRecord = record.schedule?.[selectedDayGroup]?.[selectedPeriod];
 
-  const summaryRows: WeeklyStudentSummaryRow[] = students.map((name) => {
-    const { reasonBelow100, weeklyIssue, missedHomework } =
-      getStudentWeeklyNotes(record, name);
-
-    const avg = getStudentWeeklyAverage(record, name);
-
-    return {
-      name,
-      avg: avg ?? 0,
-      reasonBelow100: reasonBelow100 || "-",
-      weeklyIssue: weeklyIssue || "-",
-      missedHomework: missedHomework ?? []
-    };
-  });
-
-  // ExportButtons에 넘길 전용 배열 (missedHomework 제외)
-  const exportRows: Omit<WeeklyStudentSummaryRow, "missedHomework">[] =
-    summaryRows.map(({ name, avg, reasonBelow100, weeklyIssue }) => ({
-      name,
-      avg,
-      reasonBelow100,
-      weeklyIssue
-    }));
+  const students = periodRecord?.homework?.map((h) => h.name) ?? [];
 
   const handleWeekSelect = (e: ChangeEvent<HTMLSelectElement>) => {
     const key = e.target.value;
@@ -102,7 +58,30 @@ export function WeeklyStudentSummary({
             <Users className="h-5 w-5" style={{ color: "var(--text-muted)" }} />
             학생 주간 요약
           </h3>
-          <ExportButtons weekKey={weekKey} summaryRows={exportRows} />
+          <ExportButtons
+            weekKey={weekKey}
+            summaryRows={students.map((name) => {
+              const avg = getStudentPeriodAverage(
+                record,
+                selectedDayGroup,
+                selectedPeriod,
+                name
+              );
+              const { reasonBelow100, weeklyIssue } = getStudentPeriodNotes(
+                record,
+                selectedDayGroup,
+                selectedPeriod,
+                name
+              );
+              return {
+                name,
+                avg: avg ?? 0,
+                reasonBelow100: reasonBelow100 || "-",
+                weeklyIssue: weeklyIssue || "-",
+                missedHomework: []
+              };
+            })}
+          />
         </div>
 
         <label className="flex items-center gap-2">
@@ -164,9 +143,19 @@ export function WeeklyStudentSummary({
             <tbody>
               {students.map((name) => {
                 const { reasonBelow100, weeklyIssue, missedHomework } =
-                  getStudentWeeklyNotes(record, name);
+                  getStudentPeriodNotes(
+                    record,
+                    selectedDayGroup,
+                    selectedPeriod,
+                    name
+                  );
 
-                const avg = getStudentWeeklyAverage(record, name);
+                const avg = getStudentPeriodAverage(
+                  record,
+                  selectedDayGroup,
+                  selectedPeriod,
+                  name
+                );
 
                 return (
                   <tr key={name}>
