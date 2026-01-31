@@ -13,29 +13,13 @@ export interface Progress {
 
 /** 교시별 숙제 한 행 */
 export interface HomeworkEntry {
-  /** 학생 이름 */
   name: string;
-
-  /** 단어 점수 */
-  wordScore: number | null;
-
-  /** 숙제 점수 */
-  homeworkScore: number | null;
-
-  /** 100% 미만 사유 */
+  wordScore: string | null; // ✅ 텍스트
+  homeworkScore: number | null; // ✅ 숫자
   reason: string;
-
-  /** 이번 주 이슈 */
   issue: string;
-
-  /** 못한 숙제 체크리스트 */
-  missedTodos: {
-    text: string;
-    done: boolean;
-  }[];
-
-  /** UI 전용: 못한 숙제 입력 임시값 */
-  _newTodo?: string;
+  missedTodos: { text: string; done: boolean }[];
+  _newTodo: string;
 }
 
 /** 교시별 수업 기록 (특이사항, 진도, 숙제) */

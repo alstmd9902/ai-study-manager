@@ -31,7 +31,7 @@ export function HomeworkTable({
       : [
           {
             name: "",
-            wordScore: null,
+            wordScore: "", // ✅ 문자열
             homeworkScore: null,
             reason: "",
             issue: "",
@@ -72,7 +72,7 @@ export function HomeworkTable({
       ...entries,
       {
         name: "",
-        wordScore: null,
+        wordScore: "", // ✅ string
         homeworkScore: null,
         reason: "",
         issue: "",
@@ -169,24 +169,15 @@ export function HomeworkTable({
                   <td className="px-2 py-2 max-w-[70px]">
                     <input
                       type="text"
-                      inputMode="numeric"
                       value={entry.wordScore ?? ""}
                       onChange={(e) => {
                         const value = e.target.value;
-                        const next = entries.map((en, i) => {
-                          if (i !== index) return en;
-                          if (value === "") return { ...en, wordScore: null };
-
-                          const num = parseInt(value, 10);
-                          const wordScore = Number.isNaN(num)
-                            ? null
-                            : Math.min(100, Math.max(0, num));
-
-                          return { ...en, wordScore };
-                        });
+                        const next = entries.map((en, i) =>
+                          i === index ? { ...en, wordScore: value } : en
+                        );
                         onChange(next);
                       }}
-                      placeholder="입력란"
+                      placeholder="예: 20/50"
                       className="w-full rounded border px-2.5 py-1"
                       style={{
                         backgroundColor: "var(--surface)",

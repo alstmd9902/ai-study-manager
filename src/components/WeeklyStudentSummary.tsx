@@ -33,7 +33,10 @@ export function WeeklyStudentSummary({
 
   const periodRecord = record.schedule?.[selectedDayGroup]?.[selectedPeriod];
 
-  const students = periodRecord?.homework?.map((h) => h.name) ?? [];
+  const students =
+    periodRecord?.homework
+      ?.map((h) => h.name)
+      .filter((name) => name && name.trim() !== "") ?? [];
 
   const handleWeekSelect = (e: ChangeEvent<HTMLSelectElement>) => {
     const key = e.target.value;
