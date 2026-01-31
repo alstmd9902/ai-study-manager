@@ -1,4 +1,4 @@
-import type { WeekRecord, WeeklyRecords, PeriodRecord } from "../types";
+import type { PeriodRecord, WeekRecord, WeeklyRecords } from "../types";
 import { STORAGE_KEY } from "./weekKey";
 
 /** 빈 주차 데이터 */
@@ -6,9 +6,11 @@ export function createEmptyWeekRecord(): WeekRecord {
   return {
     schedule: {
       monWedFri: { period1: {}, period2: {}, period3: {} },
-      tueThuSat: { period1: {}, period2: {}, period3: {} },
+      tueThuSat: { period1: {}, period2: {}, period3: {} }
     },
-    studentSummary: {},
+    // studentSummary is initialized as an empty object.
+    // When populated, each key will have both required fields: reasonBelow100 and weeklyIssue as strings.
+    studentSummary: {}
   };
 }
 
@@ -18,9 +20,19 @@ function normalizePeriodRecord(rec: PeriodRecord): PeriodRecord {
   if (!homework) return rec;
   if (Array.isArray(homework)) return rec;
   const entries = Object.entries(homework as Record<string, number | null>).map(
-    ([name, score]) => ({ name, score })
+    ([name, score]) => ({
+      name,
+      wordScore: null,
+      homeworkScore: score,
+      reason: "",
+      issue: "",
+      missedTodos: []
+    })
   );
-  return { ...rec, homework: entries };
+  return {
+    ...rec,
+    homework: entries
+  };
 }
 
 /** 주차 기록 내 모든 period의 homework를 새 형식으로 정규화 */
@@ -28,20 +40,34 @@ function normalizeWeekRecord(record: WeekRecord): WeekRecord {
   const schedule = record.schedule ?? {};
   const monWedFri = schedule.monWedFri ?? {};
   const tueThuSat = schedule.tueThuSat ?? {};
+
+  // Normalize studentSummary so every entry has both reasonBelow100 and weeklyIssue as strings.
+  const summary = record.studentSummary ?? {};
+  const normalizedStudentSummary = Object.fromEntries(
+    Object.entries(summary).map(([name, s]) => [
+      name,
+      {
+        reasonBelow100: s?.reasonBelow100 ?? "",
+        weeklyIssue: s?.weeklyIssue ?? ""
+      }
+    ])
+  );
+
   return {
     ...record,
     schedule: {
       monWedFri: {
         period1: normalizePeriodRecord(monWedFri.period1 ?? {}),
         period2: normalizePeriodRecord(monWedFri.period2 ?? {}),
-        period3: normalizePeriodRecord(monWedFri.period3 ?? {}),
+        period3: normalizePeriodRecord(monWedFri.period3 ?? {})
       },
       tueThuSat: {
         period1: normalizePeriodRecord(tueThuSat.period1 ?? {}),
         period2: normalizePeriodRecord(tueThuSat.period2 ?? {}),
-        period3: normalizePeriodRecord(tueThuSat.period3 ?? {}),
-      },
+        period3: normalizePeriodRecord(tueThuSat.period3 ?? {})
+      }
     },
+    studentSummary: normalizedStudentSummary
   };
 }
 

@@ -14,14 +14,18 @@ export interface Progress {
 /** 교시별 숙제 한 행 */
 export interface HomeworkEntry {
   name: string;
+
+  /** 단어 점수 (예: 20/50) */
   wordScore: string | null;
+
+  /** 숙제 점수 */
   homeworkScore: number | null;
 
-  /** 100% 미만 사유 */
+  /** 100% 미만 사유 (교시 기준) */
   reason?: string;
 
-  /** 이번 주 이슈 */
-  issue: string;
+  /** 교시 이슈 */
+  issue?: string;
 
   /** 못한 숙제 체크리스트 */
   missedTodos?: {
@@ -29,7 +33,6 @@ export interface HomeworkEntry {
     done: boolean;
   }[];
 
-  /** 못한 숙제 입력 중 텍스트 */
   _newTodo?: string;
 }
 
@@ -37,7 +40,6 @@ export interface HomeworkEntry {
 export interface PeriodRecord {
   note?: string;
   progress?: Partial<Progress>;
-  /** 교시마다 사용자가 입력한 학생 이름 + 점수 (순서 유지) */
   homework?: HomeworkEntry[];
 }
 

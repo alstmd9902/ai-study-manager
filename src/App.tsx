@@ -6,7 +6,7 @@ import { DayGroupTabs } from "./components/DayGroupTabs";
 import { PeriodTabs } from "./components/PeriodTabs";
 import { WeeklyStudentSummary } from "./components/WeeklyStudentSummary";
 import { WeekSelector } from "./components/WeekSelector";
-import { ThemeProvider } from "./contexts/ThemeContext";
+
 import type { DayGroupKey, PeriodKey, PeriodRecord, WeekRecord } from "./types";
 import { loadWeekRecord, saveWeekRecord } from "./utils/storage";
 import { getCurrentWeekKey } from "./utils/weekKey";
@@ -94,8 +94,8 @@ function AppContent() {
 
 export default function App() {
   return (
-    <ThemeProvider>
+    <>
       <AppContent />
-    </ThemeProvider>
+    </>
   );
 }
