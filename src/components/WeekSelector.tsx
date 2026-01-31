@@ -5,11 +5,7 @@ import {
   deleteWeekRecord,
   saveWeekRecord
 } from "../utils/storage";
-import {
-  getCurrentWeekKey,
-  getStoredWeekKeys,
-  getWeekLabel
-} from "../utils/weekKey";
+import { getStoredWeekKeys, getWeekLabel } from "../utils/weekKey";
 
 interface WeekSelectorProps {
   currentWeekKey: string;
@@ -94,8 +90,12 @@ function WeekTabs({
 
     const remaining = getStoredWeekKeys().filter((k) => !selectedKeys.has(k));
 
-    const nextKey = remaining[0] ?? getCurrentWeekKey();
+    if (remaining.length === 0) {
+      // 남은 주차가 없으면 아무 것도 선택하지 않음 (App이 책임짐)
+      return;
+    }
 
+    const nextKey = remaining[0];
     onWeekChange(nextKey);
     onRecordLoad(nextKey);
     setSelectedKeys(new Set());
@@ -110,7 +110,7 @@ function WeekTabs({
   // ✅ 월별 최대 주차 반영
   function getNextWeekKey(latestKey: string): string {
     const match = latestKey.match(/^(\d{4})-(\d{2})-week(\d)$/);
-    if (!match) return getCurrentWeekKey();
+    if (!match) return latestKey;
 
     let year = parseInt(match[1], 10);
     let month = parseInt(match[2], 10);
@@ -152,7 +152,7 @@ function WeekTabs({
     const latestKey =
       weekOptions.length > 0
         ? weekOptions[weekOptions.length - 1]
-        : getCurrentWeekKey();
+        : currentWeekKey;
 
     const nextKey = getNextWeekKey(latestKey);
 

@@ -1,6 +1,6 @@
 // src/App.tsx
 import { GraduationCap } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ClassRecordForm } from "./components/ClassRecordForm";
 import { DayGroupTabs } from "./components/DayGroupTabs";
 import { PeriodTabs } from "./components/PeriodTabs";
@@ -11,13 +11,29 @@ import type { DayGroupKey, PeriodKey, PeriodRecord, WeekRecord } from "./types";
 import { loadWeekRecord, saveWeekRecord } from "./utils/storage";
 import { getCurrentWeekKey } from "./utils/weekKey";
 
+const LAST_WEEK_KEY = "lastSelectedWeekKey";
+
 function AppContent() {
-  const [weekKey, setWeekKey] = useState(getCurrentWeekKey);
+  const [weekKey, setWeekKey] = useState(() => {
+    const saved = localStorage.getItem(LAST_WEEK_KEY);
+    return saved ?? getCurrentWeekKey();
+  });
   const [record, setRecord] = useState<WeekRecord>(() =>
-    loadWeekRecord(getCurrentWeekKey())
+    loadWeekRecord(localStorage.getItem(LAST_WEEK_KEY) ?? getCurrentWeekKey())
   );
   const [dayGroup, setDayGroup] = useState<DayGroupKey>("monWedFri");
   const [period, setPeriod] = useState<PeriodKey>("period1");
+
+  useEffect(() => {
+    // weekKey가 바뀌면 해당 주차 record를 다시 로드
+    setRecord(loadWeekRecord(weekKey));
+  }, [weekKey]);
+
+  useEffect(() => {
+    if (weekKey) {
+      localStorage.setItem(LAST_WEEK_KEY, weekKey);
+    }
+  }, [weekKey]);
 
   const loadRecord = useCallback((key: string) => {
     setRecord(loadWeekRecord(key));
