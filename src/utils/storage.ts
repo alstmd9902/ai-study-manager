@@ -1,8 +1,21 @@
 import type { PeriodRecord, WeekRecord, WeeklyRecords } from "../types";
 import { STORAGE_KEY } from "./weekKey";
 
+type StudentSummaryMap = Record<
+  string,
+  {
+    reasonBelow100?: string;
+    weeklyIssue?: string;
+  }
+>;
+
 /** 빈 주차 데이터 */
-export function createEmptyWeekRecord(): WeekRecord {
+export function createEmptyWeekRecord(): WeekRecord & {
+  studentSummary: Record<
+    string,
+    { reasonBelow100: string; weeklyIssue: string }
+  >;
+} {
   return {
     schedule: {
       monWedFri: { period1: {}, period2: {}, period3: {} },
@@ -11,6 +24,11 @@ export function createEmptyWeekRecord(): WeekRecord {
     // studentSummary is initialized as an empty object.
     // When populated, each key will have both required fields: reasonBelow100 and weeklyIssue as strings.
     studentSummary: {}
+  } as WeekRecord & {
+    studentSummary: Record<
+      string,
+      { reasonBelow100: string; weeklyIssue: string }
+    >;
   };
 }
 
@@ -26,7 +44,8 @@ function normalizePeriodRecord(rec: PeriodRecord): PeriodRecord {
       homeworkScore: score,
       reason: "",
       issue: "",
-      missedTodos: []
+      missedTodos: [],
+      _newTodo: ""
     })
   );
   return {
@@ -42,8 +61,15 @@ function normalizeWeekRecord(record: WeekRecord): WeekRecord {
   const tueThuSat = schedule.tueThuSat ?? {};
 
   // Normalize studentSummary so every entry has both reasonBelow100 and weeklyIssue as strings.
-  const summary = record.studentSummary ?? {};
-  const normalizedStudentSummary = Object.fromEntries(
+  const summary: StudentSummaryMap =
+    "studentSummary" in record && record.studentSummary
+      ? (record.studentSummary as StudentSummaryMap)
+      : {};
+
+  const normalizedStudentSummary: Record<
+    string,
+    { reasonBelow100: string; weeklyIssue: string }
+  > = Object.fromEntries(
     Object.entries(summary).map(([name, s]) => [
       name,
       {
@@ -68,7 +94,7 @@ function normalizeWeekRecord(record: WeekRecord): WeekRecord {
       }
     },
     studentSummary: normalizedStudentSummary
-  };
+  } as WeekRecord;
 }
 
 /** LocalStorage에서 전체 데이터 읽기 */
