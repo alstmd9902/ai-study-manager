@@ -65,7 +65,7 @@ export interface StudentSummaryEntry {
 /** 주차 단위 데이터 */
 export interface WeekRecord {
   schedule: Schedule;
-  studentSummary?: Record<
+  studentSummary: Record<
     string,
     {
       reasonBelow100: string;

@@ -31,7 +31,7 @@ export function DayGroupTabs({ active, onChange }: DayGroupTabsProps) {
     <div>
       <TodayDisplay />
       <div
-        className="flex gap-1 rounded-lg p-3"
+        className="flex gap-3 rounded-lg p-3"
         style={{
           backgroundColor: "var(--surface)",
           border: "1px solid var(--border)"
@@ -42,17 +42,23 @@ export function DayGroupTabs({ active, onChange }: DayGroupTabsProps) {
             key={key}
             type="button"
             onClick={() => onChange(key)}
-            className="rounded-md px-4 py-2 font-medium transition-colors"
+            className="rounded-md px-4 py-2 font-medium transition-all"
             style={{
               fontSize: "1rem",
               ...(active === key
                 ? {
-                    backgroundColor: "var(--surface)",
+                    // 눌린 상태
                     color: "var(--text-main)",
-                    boxShadow: "0 1px 2px rgba(0, 0, 0, 0.76)"
+                    transform: "translateY(1px)",
+                    boxShadow: "inset 0 2px 4px rgba(0,0,0,0.25)",
+                    backgroundColor: "var(--surface)"
                   }
                 : {
-                    color: "#3d3d3d8a"
+                    // 기본(떠 있는 상태)
+                    color: "#3d3d3d7c",
+                    transform: "translateY(-1px)",
+                    boxShadow: "0 4px 8px rgba(0,0,0,0.15)",
+                    backgroundColor: "var(--surface)"
                   })
             }}
           >

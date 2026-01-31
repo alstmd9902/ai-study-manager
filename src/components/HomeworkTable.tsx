@@ -16,7 +16,7 @@ export function HomeworkTable({
   const PERIOD_BADGE_COLOR: Record<1 | 2 | 3, string> = {
     1: "#0551f6", // 파랑
     2: "#29b829", // 초록
-    3: "#c143aa" // 분홍
+    3: "#ec4899" // 분홍
   };
   // period를 1|2|3 숫자로 정규화
   const normalizePeriod = (p: unknown): 1 | 2 | 3 => {
@@ -156,13 +156,13 @@ export function HomeworkTable({
             {entries.map((entry, index) => (
               <Fragment key={index}>
                 <tr key={index} style={{ verticalAlign: "top" }}>
-                  <td className="px-2 py-2">
+                  <td className="px-2 py-2 max-w-[80px]">
                     <input
                       type="text"
                       value={entry.name}
                       onChange={(e) => handleNameChange(index, e.target.value)}
                       placeholder="입력"
-                      className="inline-block w-[90px] rounded-lg px-4 py-1 font-semibold focus:outline-none"
+                      className="inline-block w-full rounded-lg px-4 py-1 font-semibold focus:outline-none"
                       style={{
                         backgroundColor:
                           PERIOD_BADGE_COLOR[normalizePeriod(period)],
@@ -174,7 +174,7 @@ export function HomeworkTable({
                   </td>
 
                   {/* 단어점수 적는란 */}
-                  <td className="px-2 py-2">
+                  <td className="px-2 py-2 max-w-[70px]">
                     <input
                       type="text"
                       value={entry.wordScore ?? ""}
@@ -190,7 +190,7 @@ export function HomeworkTable({
                         onChange(next);
                       }}
                       placeholder="입력란"
-                      className="w-16 text-center rounded border px-2.5 py-1"
+                      className="w-full rounded border px-2.5 py-1"
                       style={{
                         backgroundColor: "var(--surface)",
                         color: "var(--text-main)",
@@ -200,31 +200,39 @@ export function HomeworkTable({
                     />
                   </td>
 
-                  <td className="px-2 py-2">
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      value={
-                        entry.homeworkScore != null
-                          ? String(entry.homeworkScore)
-                          : ""
-                      }
-                      onChange={(e) =>
-                        handleHomeworkScoreChange(index, e.target.value)
-                      }
-                      placeholder="숫자"
-                      className="w-12 rounded border px-2.5 py-1"
-                      style={{
-                        backgroundColor: "var(--surface)",
-                        color:
-                          typeof entry.homeworkScore === "number" &&
-                          entry.homeworkScore < 100
-                            ? "red"
-                            : "var(--text-main)",
-                        borderColor: "var(--border)",
-                        fontSize: "1rem"
-                      }}
-                    />
+                  <td className="px-2 py-2 max-w-[80px]">
+                    <div className="flex items-center gap-1">
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={
+                          entry.homeworkScore != null
+                            ? String(entry.homeworkScore)
+                            : ""
+                        }
+                        onChange={(e) =>
+                          handleHomeworkScoreChange(index, e.target.value)
+                        }
+                        placeholder="숫자"
+                        className="w-full rounded border px-2.5 py-1"
+                        style={{
+                          backgroundColor: "var(--surface)",
+                          color:
+                            typeof entry.homeworkScore === "number" &&
+                            entry.homeworkScore < 100
+                              ? "red"
+                              : "var(--text-main)",
+                          borderColor: "var(--border)",
+                          fontSize: "1rem"
+                        }}
+                      />
+                      <span
+                        className="text-sm"
+                        style={{ color: "var(--text-muted)" }}
+                      >
+                        %
+                      </span>
+                    </div>
                   </td>
                   <td className="px-3 py-2.5">
                     <textarea
@@ -286,7 +294,7 @@ export function HomeworkTable({
                         backgroundColor: "var(--surface-hover)"
                       }}
                     >
-                      <div className="font-medium text-sm">못한 숙제</div>
+                      <div className="font-medium text-sm">👉 못한 숙제</div>
                       {/* 입력 + 추가 */}
                       <div className="flex items-center gap-2">
                         <input
@@ -347,7 +355,7 @@ export function HomeworkTable({
                             key={`${index}-todo-${tIndex}`}
                             className="group flex items-start gap-2 text-sm"
                           >
-                            <label className="flex items-cneter gap-2 cursor-pointer">
+                            <label className="flex items-cneter gap-2 cursor-pointer ml-1">
                               <input
                                 type="checkbox"
                                 checked={todo.done}

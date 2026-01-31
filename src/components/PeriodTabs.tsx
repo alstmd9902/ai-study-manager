@@ -11,10 +11,16 @@ const TABS: { key: PeriodKey; label: string }[] = [
   { key: "period3", label: "3교시" }
 ];
 
+const ACTIVE_BG: Record<PeriodKey, string> = {
+  period1: "#2563eb", // blue
+  period2: "#16a34a", // green
+  period3: "#ec4899" // pink
+};
+
 export function PeriodTabs({ active, onChange }: PeriodTabsProps) {
   return (
     <div
-      className="flex gap-1 rounded-lg p-3"
+      className="flex gap-3 rounded-lg p-3"
       style={{
         backgroundColor: "var(--surface)",
         border: "1px solid var(--border)"
@@ -30,12 +36,18 @@ export function PeriodTabs({ active, onChange }: PeriodTabsProps) {
             fontSize: "1rem",
             ...(active === key
               ? {
-                  backgroundColor: "var(--surface)",
-                  color: "var(--text-main)",
-                  boxShadow: "0 1px 2px rgba(0, 0, 0, 0.76)"
+                  // 눌린 상태
+                  backgroundColor: ACTIVE_BG[key],
+                  color: "#ffffff",
+                  transform: "translateY(1px)",
+                  boxShadow: "inset 0 2px 4px rgba(0,0,0,0.25)"
                 }
               : {
-                  color: "#3d3d3d8a"
+                  // 기본(떠 있는 상태)
+                  backgroundColor: "var(--surface)",
+                  color: "#3d3d3d8a",
+                  transform: "translateY(-1px)",
+                  boxShadow: "0 4px 8px rgba(0,0,0,0.15)"
                 })
           }}
         >

@@ -50,10 +50,8 @@ export function WeeklyStudentSummary({
   onRecordLoad
 }: WeeklyStudentSummaryProps) {
   const storedKeys = getStoredWeekKeys();
-  const hasCurrent = storedKeys.includes(weekKey);
-  const options = hasCurrent
-    ? storedKeys
-    : [weekKey, ...storedKeys].sort((a, b) => b.localeCompare(a));
+  const uniqueKeys = Array.from(new Set([weekKey, ...storedKeys]));
+  const options = uniqueKeys.sort((a, b) => a.localeCompare(b));
 
   const students = getUniqueStudentNamesFromWeek(record);
 
