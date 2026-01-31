@@ -24,6 +24,13 @@ export interface HomeworkEntry {
 
 /** 교시별 수업 기록 (특이사항, 진도, 숙제) */
 export interface PeriodRecord {
+  /** 교시 메모 */
+  note?: string;
+
+  /** 진도/상태 정보 */
+  progress?: Partial<Progress>;
+
+  /** 교시마다 사용자가 입력한 학생 이름 + 점수 */
   homework?: HomeworkEntry[];
 }
 /** 요일 그룹별 교시 기록 */
