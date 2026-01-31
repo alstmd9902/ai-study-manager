@@ -8,9 +8,9 @@ import {
 import { getStoredWeekKeys, getWeekLabel } from "../utils/weekKey";
 
 interface WeekSelectorProps {
-  currentWeekKey: string;
-  onWeekChange: (weekKey: string) => void;
-  onRecordLoad: (weekKey: string) => void;
+  currentWeekKey?: string;
+  onWeekChange: (weekKey?: string) => void;
+  onRecordLoad: (weekKey?: string) => void;
 }
 
 export function WeekSelector({
@@ -18,8 +18,10 @@ export function WeekSelector({
   onWeekChange,
   onRecordLoad
 }: WeekSelectorProps) {
-  // ✅ 항상 저장된 주차 기준 + 오름차순
-  const weekOptions = getStoredWeekKeys().sort((a, b) => a.localeCompare(b));
+  const [weekOptions, setWeekOptions] = useState<string[]>(() => {
+    const keys = getStoredWeekKeys() ?? [];
+    return [...keys].sort((a, b) => a.localeCompare(b));
+  });
 
   const handleTabClick = (key: string) => {
     onWeekChange(key);
@@ -29,6 +31,7 @@ export function WeekSelector({
   return (
     <WeekTabs
       weekOptions={weekOptions}
+      setWeekOptions={setWeekOptions}
       currentWeekKey={currentWeekKey}
       onTabClick={handleTabClick}
       onRecordLoad={onRecordLoad}
@@ -40,16 +43,18 @@ export function WeekSelector({
 /** 주차 탭 + 다중 선택 삭제 */
 function WeekTabs({
   weekOptions,
+  setWeekOptions,
   currentWeekKey,
   onTabClick,
   onRecordLoad,
   onWeekChange
 }: {
   weekOptions: string[];
-  currentWeekKey: string;
+  setWeekOptions: React.Dispatch<React.SetStateAction<string[]>>;
+  currentWeekKey?: string;
   onTabClick: (key: string) => void;
-  onRecordLoad: (key: string) => void;
-  onWeekChange: (key: string) => void;
+  onRecordLoad: (key?: string) => void;
+  onWeekChange: (key?: string) => void;
 }) {
   const [deleteMode, setDeleteMode] = useState(false);
   const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
@@ -83,23 +88,35 @@ function WeekTabs({
       !confirm(
         `선택한 ${selectedKeys.size}개 주차를 삭제할까요? (기록이 모두 삭제됩니다.)`
       )
-    )
-      return;
-
-    selectedKeys.forEach((key) => deleteWeekRecord(key));
-
-    const remaining = getStoredWeekKeys().filter((k) => !selectedKeys.has(k));
-
-    if (remaining.length === 0) {
-      // 남은 주차가 없으면 아무 것도 선택하지 않음 (App이 책임짐)
+    ) {
       return;
     }
 
-    const nextKey = remaining[0];
-    onWeekChange(nextKey);
-    onRecordLoad(nextKey);
+    // 1) 스토리지에서 실제 삭제
+    selectedKeys.forEach((key) => deleteWeekRecord(key));
+
+    // 2) 스토리지 기준으로 최신 주차 목록 재조회
+    const remainingKeys = getStoredWeekKeys().sort((a, b) =>
+      a.localeCompare(b)
+    );
+
+    // 3) UI 상태 즉시 반영
+    setWeekOptions(remainingKeys);
     setSelectedKeys(new Set());
     setDeleteMode(false);
+
+    // 4) 현재 선택 주차가 삭제되었으면 App에 즉시 반영
+    if (!currentWeekKey || !remainingKeys.includes(currentWeekKey)) {
+      if (remainingKeys.length > 0) {
+        const nextKey = remainingKeys[0];
+        onWeekChange(nextKey);
+        onRecordLoad(nextKey);
+      } else {
+        // 주차가 하나도 없으면 선택 초기화
+        onWeekChange(undefined);
+        onRecordLoad(undefined);
+      }
+    }
   };
 
   const handleCancelDelete = () => {
@@ -107,61 +124,85 @@ function WeekTabs({
     setSelectedKeys(new Set());
   };
 
-  // ✅ 월별 최대 주차 반영
-  function getNextWeekKey(latestKey: string): string {
-    const match = latestKey.match(/^(\d{4})-(\d{2})-week(\d)$/);
-    if (!match) return latestKey;
+  const handleAddWeek = () => {
+    const today = new Date();
 
-    let year = parseInt(match[1], 10);
-    let month = parseInt(match[2], 10);
-    let week = parseInt(match[3], 10);
+    const year = today.getFullYear();
+    const month = today.getMonth() + 1; // 1~12
+    const day = today.getDate();
 
-    const maxWeeksByMonth: Record<number, number> = {
-      1: 5,
-      2: 4,
-      3: 5,
-      4: 4,
-      5: 5,
-      6: 4,
-      7: 5,
-      8: 5,
-      9: 4,
-      10: 5,
-      11: 4,
-      12: 5
+    // 해당 월의 1일 요일
+    const firstDay = new Date(year, month - 1, 1).getDay();
+
+    const getMaxWeeksInMonth = (y: number, m: number) => {
+      const first = new Date(y, m - 1, 1).getDay();
+      const last = new Date(y, m, 0).getDate();
+      return Math.ceil((first + last) / 7);
     };
 
-    const maxWeek = maxWeeksByMonth[month] ?? 4;
+    let nextYear = year;
+    let nextMonth = month;
 
-    if (week < maxWeek) {
-      week += 1;
-    } else {
-      week = 1;
-      if (month === 12) {
-        year += 1;
-        month = 1;
+    let maxWeeks = getMaxWeeksInMonth(nextYear, nextMonth);
+    let nextWeek = Math.ceil((firstDay + day) / 7);
+    if (nextWeek > maxWeeks) nextWeek = maxWeeks;
+
+    let nextKey = `${nextYear}-${String(nextMonth).padStart(2, "0")}-week${nextWeek}`;
+
+    // 🔴 이미 존재하면 → 계속 다음 주차 탐색
+    while (weekOptions.includes(nextKey)) {
+      if (nextWeek < maxWeeks) {
+        nextWeek += 1;
       } else {
-        month += 1;
+        // 다음 달로 이동
+        nextWeek = 1;
+        if (nextMonth === 12) {
+          nextMonth = 1;
+          nextYear += 1;
+        } else {
+          nextMonth += 1;
+        }
+        maxWeeks = getMaxWeeksInMonth(nextYear, nextMonth);
       }
+
+      nextKey = `${nextYear}-${String(nextMonth).padStart(2, "0")}-week${nextWeek}`;
     }
 
-    return `${year}-${month.toString().padStart(2, "0")}-week${week}`;
-  }
+    // 이미 또 있으면 아무것도 안 함 (중복 방지)
+    if (weekOptions.includes(nextKey)) {
+      onWeekChange(nextKey);
+      onRecordLoad(nextKey);
+      return;
+    }
 
-  const handleAddWeek = () => {
-    const latestKey =
-      weekOptions.length > 0
-        ? weekOptions[weekOptions.length - 1]
-        : currentWeekKey;
-
-    const nextKey = getNextWeekKey(latestKey);
-
-    // ✅ 타입 안전한 빈 주차 생성
+    // ✅ 새 주차 생성
     saveWeekRecord(nextKey, createEmptyWeekRecord());
+
+    setWeekOptions((prev) =>
+      [...prev, nextKey].sort((a, b) => a.localeCompare(b))
+    );
 
     onWeekChange(nextKey);
     onRecordLoad(nextKey);
   };
+
+  //월별 묶음 UI 표시 로직
+  const groupWeeksByMonth = (weeks: string[]) => {
+    const groups: Record<string, string[]> = {};
+
+    weeks.forEach((key) => {
+      const [year, month] = key.split("-"); // 2026, 02
+      const label = `${year}년 ${Number(month)}월`;
+
+      if (!groups[label]) {
+        groups[label] = [];
+      }
+      groups[label].push(key);
+    });
+
+    return groups;
+  };
+  const monthGroups = groupWeeksByMonth(weekOptions);
 
   return (
     <div
@@ -247,53 +288,69 @@ function WeekTabs({
         </div>
       )}
 
-      {/* 주차 목록 */}
-      <div className="flex flex-wrap gap-2">
-        {weekOptions.map((key) => (
-          <label
-            key={key}
-            className="flex items-center gap-2 rounded-lg border px-3 py-2 cursor-pointer transition-all"
-            style={{
-              borderColor: "var(--border)",
-              borderWidth: "1px",
-              backgroundColor: "var(--surface)",
-              fontWeight: currentWeekKey === key ? 600 : 400,
-              color:
-                currentWeekKey === key
-                  ? "var(--text-main)"
-                  : "rgba(0,0,0,0.35)",
-              outline:
-                currentWeekKey === key ? "2px solid var(--accent)" : "none",
-              outlineOffset: "-1px",
-              transform:
-                currentWeekKey === key ? "translateY(1px)" : "translateY(-1px)",
-              boxShadow:
-                currentWeekKey === key
-                  ? "inset 0 2px 4px rgba(0,0,0,0.25)"
-                  : "0 4px 8px rgba(0,0,0,0.15)"
-            }}
-          >
-            {deleteMode ? (
-              <>
-                <input
-                  type="checkbox"
-                  checked={selectedKeys.has(key)}
-                  onChange={() => toggleSelect(key)}
-                  className="h-4 w-4"
-                  style={{ accentColor: "var(--accent)" }}
-                />
-                <span>{getWeekLabel(key)}</span>
-              </>
-            ) : (
-              <button
-                type="button"
-                onClick={() => onTabClick(key)}
-                className="font-medium"
-              >
-                {getWeekLabel(key)}
-              </button>
-            )}
-          </label>
+      {/* 주차 목록 (월별 묶음 렌더링) */}
+      <div className="flex flex-col gap-4">
+        {Object.entries(monthGroups).map(([monthLabel, keys]) => (
+          <div key={monthLabel}>
+            {/* 월 제목 */}
+            <div className="mb-2 text-sm font-semibold text-gray-600">
+              {monthLabel}
+            </div>
+
+            {/* 해당 월의 주차들 */}
+            <div className="flex flex-wrap gap-2">
+              {keys.map((key) => (
+                <label
+                  key={key}
+                  className="flex items-center gap-2 rounded-lg border px-3 py-2 cursor-pointer transition-all"
+                  style={{
+                    borderColor: "var(--border)",
+                    borderWidth: "1px",
+                    backgroundColor: "var(--surface)",
+                    fontWeight: currentWeekKey === key ? 600 : 400,
+                    color:
+                      currentWeekKey === key
+                        ? "var(--text-main)"
+                        : "rgba(0,0,0,0.35)",
+                    outline:
+                      currentWeekKey === key
+                        ? "2px solid var(--accent)"
+                        : "none",
+                    outlineOffset: "-1px",
+                    transform:
+                      currentWeekKey === key
+                        ? "translateY(1px)"
+                        : "translateY(-1px)",
+                    boxShadow:
+                      currentWeekKey === key
+                        ? "inset 0 2px 4px rgba(0,0,0,0.25)"
+                        : "0 4px 8px rgba(0,0,0,0.15)"
+                  }}
+                >
+                  {deleteMode ? (
+                    <>
+                      <input
+                        type="checkbox"
+                        checked={selectedKeys.has(key)}
+                        onChange={() => toggleSelect(key)}
+                        className="h-4 w-4"
+                        style={{ accentColor: "var(--accent)" }}
+                      />
+                      <span>{getWeekLabel(key)}</span>
+                    </>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => onTabClick(key)}
+                      className="font-medium"
+                    >
+                      {getWeekLabel(key)}
+                    </button>
+                  )}
+                </label>
+              ))}
+            </div>
+          </div>
         ))}
       </div>
     </div>

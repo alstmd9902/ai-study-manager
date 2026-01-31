@@ -8,6 +8,7 @@ interface ClassRecordFormProps {
   onUpdate: (record: PeriodRecord) => void;
   dayGroup: DayGroupKey;
   period: PeriodKey;
+  currentWeekKey?: string;
 }
 
 const PERIOD_NUMBER_MAP: Record<PeriodKey, 1 | 2 | 3> = {

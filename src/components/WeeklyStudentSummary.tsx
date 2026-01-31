@@ -5,7 +5,12 @@ import {
   getStudentPeriodAverage,
   getStudentPeriodNotes
 } from "../utils/average";
-import { getStoredWeekKeys, getWeekLabel } from "../utils/weekKey";
+import {
+  getStoredWeekKeys,
+  getWeekLabel,
+  groupWeekKeysByMonth,
+  sortWeekKeysAsc
+} from "../utils/weekKey";
 import { ExportButtons } from "./ExportButtons";
 
 interface WeeklyStudentSummaryProps {
@@ -28,8 +33,11 @@ export function WeeklyStudentSummary({
   onRecordLoad
 }: WeeklyStudentSummaryProps) {
   const storedKeys = getStoredWeekKeys();
+  const hasWeeks = storedKeys.length > 0;
   const uniqueKeys = Array.from(new Set([weekKey, ...storedKeys]));
-  const options = uniqueKeys.sort((a, b) => a.localeCompare(b));
+
+  // ✅ 월별 그룹
+  const monthGroups = groupWeekKeysByMonth(uniqueKeys);
 
   const periodRecord = record.schedule?.[selectedDayGroup]?.[selectedPeriod];
 
@@ -87,41 +95,57 @@ export function WeeklyStudentSummary({
           />
         </div>
 
-        <label className="flex items-center gap-2">
-          <span
-            className="text-sm font-medium mr-3"
-            style={{ color: "var(--text-muted)" }}
-          >
-            주차 선택
-          </span>
-
-          <div className="relative">
-            <select
-              value={weekKey}
-              onChange={handleWeekSelect}
-              className="appearance-none rounded-lg border px-3 py-2 pr-10 w-[120px]"
-              style={{
-                backgroundColor: "var(--surface)",
-                color: "var(--text-main)",
-                borderColor: "var(--border)",
-                fontSize: "1rem"
-              }}
-            >
-              {options.map((key) => (
-                <option key={key} value={key}>
-                  {getWeekLabel(key)}
-                </option>
-              ))}
-            </select>
-
-            <ChevronDown
-              className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4"
+        {/* 🔹 주차 선택 셀렉트 (상단 주차와 동일 기준) */}
+        {hasWeeks && (
+          <label className="flex items-center gap-2">
+            <span
+              className="text-sm font-medium mr-3"
               style={{ color: "var(--text-muted)" }}
-            />
-          </div>
-        </label>
+            >
+              주차 선택
+            </span>
+
+            <div className="relative">
+              <select
+                value={weekKey}
+                onChange={handleWeekSelect}
+                className="appearance-none rounded-lg border px-3 py-2 pr-10 w-[140px]"
+                style={{
+                  backgroundColor: "var(--surface)",
+                  color: "var(--text-main)",
+                  borderColor: "var(--border)",
+                  fontSize: "1rem"
+                }}
+              >
+                {Object.entries(monthGroups).map(([monthKey, keys]) => {
+                  const sortedKeys = sortWeekKeysAsc(keys);
+                  const monthLabel = `${monthKey.split("-")[1]}월`;
+
+                  return (
+                    <optgroup key={monthKey} label={monthLabel}>
+                      {sortedKeys.map((key) => (
+                        <option key={key} value={key}>
+                          {getWeekLabel(key)}
+                        </option>
+                      ))}
+                    </optgroup>
+                  );
+                })}
+              </select>
+
+              <ChevronDown
+                className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4"
+                style={{ color: "var(--text-muted)" }}
+              />
+            </div>
+          </label>
+        )}
+        {!hasWeeks && (
+          <span className="text-sm text-gray-400">주차를 추가해주세요</span>
+        )}
       </div>
 
+      {/* 학생 이름이 있을경우에만 UI */}
       {students.length === 0 ? (
         <p style={{ color: "var(--text-muted)", fontSize: "1rem" }}>
           이 주에 교시별 숙제에 입력한 학생이 없습니다.

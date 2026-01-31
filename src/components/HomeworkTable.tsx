@@ -14,10 +14,11 @@ export function HomeworkTable({
   period
 }: HomeworkTableProps) {
   const PERIOD_BADGE_COLOR: Record<1 | 2 | 3, string> = {
-    1: "#0551f6", // 파랑
-    2: "#29b829", // 초록
-    3: "#ec4899" // 분홍
+    1: "#0551f6",
+    2: "#29b829",
+    3: "#ec4899"
   };
+
   // Normalize to use reason string for all entries
   const entries: HomeworkEntry[] =
     homework.length > 0
